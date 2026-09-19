@@ -1,0 +1,129 @@
+schema: dark-factory.dev/delta/v1
+id: chg:example-product:2026:0002
+change: chg:example-product:2026:0002
+slug: percent-button
+title: Percent button for the calculator (M3)
+product: example-product
+status: draft
+stage: specification
+phase: requirements
+intent: intent.md
+
+scope:
+  in:
+    - "a `%` key rendered in the existing calculator keypad"
+    - "percent applied to the current operand of a pending +, -, ×, ÷ operation"
+    - "percent applied to an entry with no pending operation"
+    - "precision, rounding and formatting parity with the existing operations"
+    - "regression safety for pre-existing keys"
+  out:
+    - "scientific functions"
+    - "new number formatting or rounding rules"
+    - "behaviour changes to pre-existing keys"
+    - "keyboard/OS-level input mapping for `%`"
+    - "memory, history, unit conversion"
+
+adds:
+  requirements:
+    - id: req:example-product:calculator:percent-key
+      title: Percent key in the keypad
+      file: spec/requirements/REQ-001-percent-key.md
+      status: draft
+      acceptance_criteria: [AC-1, AC-2, AC-3, AC-4]
+    - id: req:example-product:calculator:percent-pending-operation
+      title: Percent applied to the current operand of a pending operation
+      file: spec/requirements/REQ-002-percent-pending-operation.md
+      status: draft
+      acceptance_criteria: [AC-1, AC-2, AC-3, AC-4, AC-5, AC-6]
+    - id: req:example-product:calculator:precision-parity
+      title: Percent results use the calculator's existing precision and formatting
+      file: spec/requirements/REQ-003-precision-parity.md
+      status: draft
+      acceptance_criteria: [AC-1, AC-2, AC-3]
+    - id: req:example-product:calculator:percent-without-pending-operation
+      title: Percent with no pending operation or no second operand
+      file: spec/requirements/REQ-004-percent-without-pending-operation.md
+      status: draft
+      acceptance_criteria: [AC-1, AC-2, AC-3, AC-4]
+  scenarios:
+    - id: scenario:example-product:calculator:percent-key-present
+      file: ../../../scenarios/SCN-001-percent-key-present.md
+    - id: scenario:example-product:calculator:percent-of-pending-multiplication
+      file: ../../../scenarios/SCN-002-percent-of-pending-multiplication.md
+    - id: scenario:example-product:calculator:percent-of-pending-addition
+      file: ../../../scenarios/SCN-003-percent-of-pending-addition.md
+    - id: scenario:example-product:calculator:percent-of-pending-division
+      file: ../../../scenarios/SCN-004-percent-of-pending-division.md
+    - id: scenario:example-product:calculator:repeated-percent-and-zero-operands
+      file: ../../../scenarios/SCN-005-repeated-percent-and-zero-operands.md
+    - id: scenario:example-product:calculator:precision-parity
+      file: ../../../scenarios/SCN-006-precision-parity.md
+    - id: scenario:example-product:calculator:percent-without-pending-operation
+      file: ../../../scenarios/SCN-007-percent-without-pending-operation.md
+    - id: scenario:example-product:calculator:existing-keys-regression
+      file: ../../../scenarios/SCN-008-existing-keys-regression.md
+
+modifies: []
+removes: []
+
+traceability:
+  - criterion: req:example-product:calculator:percent-key#AC-1
+    scenarios: [scenario:example-product:calculator:percent-key-present]
+  - criterion: req:example-product:calculator:percent-key#AC-2
+    scenarios: [scenario:example-product:calculator:percent-key-present]
+  - criterion: req:example-product:calculator:percent-key#AC-3
+    scenarios: [scenario:example-product:calculator:percent-key-present]
+  - criterion: req:example-product:calculator:percent-key#AC-4
+    scenarios: [scenario:example-product:calculator:existing-keys-regression]
+  - criterion: req:example-product:calculator:percent-pending-operation#AC-1
+    scenarios: [scenario:example-product:calculator:percent-of-pending-addition]
+  - criterion: req:example-product:calculator:percent-pending-operation#AC-2
+    scenarios: [scenario:example-product:calculator:percent-of-pending-addition]
+  - criterion: req:example-product:calculator:percent-pending-operation#AC-3
+    scenarios: [scenario:example-product:calculator:percent-of-pending-multiplication]
+  - criterion: req:example-product:calculator:percent-pending-operation#AC-4
+    scenarios: [scenario:example-product:calculator:percent-of-pending-division]
+  - criterion: req:example-product:calculator:percent-pending-operation#AC-5
+    scenarios: [scenario:example-product:calculator:repeated-percent-and-zero-operands]
+  - criterion: req:example-product:calculator:percent-pending-operation#AC-6
+    scenarios: [scenario:example-product:calculator:repeated-percent-and-zero-operands]
+  - criterion: req:example-product:calculator:precision-parity#AC-1
+    scenarios:
+      - scenario:example-product:calculator:percent-of-pending-multiplication
+      - scenario:example-product:calculator:precision-parity
+  - criterion: req:example-product:calculator:precision-parity#AC-2
+    scenarios: [scenario:example-product:calculator:precision-parity]
+  - criterion: req:example-product:calculator:precision-parity#AC-3
+    scenarios: [scenario:example-product:calculator:precision-parity]
+  - criterion: req:example-product:calculator:percent-without-pending-operation#AC-1
+    scenarios: [scenario:example-product:calculator:percent-without-pending-operation]
+  - criterion: req:example-product:calculator:percent-without-pending-operation#AC-2
+    scenarios: [scenario:example-product:calculator:percent-without-pending-operation]
+  - criterion: req:example-product:calculator:percent-without-pending-operation#AC-3
+    scenarios: [scenario:example-product:calculator:percent-without-pending-operation]
+  - criterion: req:example-product:calculator:percent-without-pending-operation#AC-4
+    scenarios: [scenario:example-product:calculator:percent-without-pending-operation]
+
+open_questions:
+  - id: Q1
+    text: >-
+      Which percent semantics apply while a binary operation is pending — percentage of the pending
+      operand (200 + 10 % = 220) or a plain divide-by-100 of the current entry (200 + 10 % = 200.1)?
+    kind: choice
+    blocking: true
+    anchor: spec/requirements/REQ-002-percent-pending-operation.md#AC-1
+  - id: Q2
+    text: >-
+      Is the operand handed to the pending operation the value as displayed after `%`
+      (display-rounded), or the exact product a × b ÷ 100 at full internal precision when it exceeds
+      the display width?
+    kind: choice
+    blocking: true
+    anchor: spec/requirements/REQ-003-precision-parity.md#AC-3
+  - id: Q3
+    text: >-
+      What must `%` do when there is no pending operand — no pending operation at all (50 %), and a
+      pending operation whose second operand has not been entered (200 + %)?
+    kind: choice
+    blocking: true
+    anchor: spec/requirements/REQ-004-percent-without-pending-operation.md#AC-1
