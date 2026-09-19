@@ -184,3 +184,7 @@ rework order asks to justify is, on inspection, a zero contract change.
 - A later change of placement edits only the descriptor's cell value (or the extension point's entry);
   `key_id: percent` and the id `adr:example-product:0004` stay stable, and this ADR is revised in
   place rather than renumbered.
+
+## Примечание оператора (M3 live)
+
+Правка после согласования: проверяем, что согласование архитектуры становится неактуальным (ADR-039 п.4).
