@@ -28,6 +28,15 @@ Two places decide how a number is shown and how much of it survives: the arithme
 number formatter. A percent-specific copy of either would be a second source of truth and would drift
 from the `+`, `-`, `×`, `÷` behaviour that `AC-1` and `AC-2` compare against.
 
+This decision lives entirely on the value/display path of the core. The rework order
+`rw_a63e37d99e9b4589` asks for a design that reaches the required behaviour without changing the
+keypad's public API; this ADR contributes to that answer by keeping the parity mechanism internal —
+the format-then-parse boundary of point 3 below is inside the core, the keypad neither formats nor
+rounds, and no keypad field, entry point or signature is involved (`ADR-004`). The alternative that
+would avoid touching the core's value path at all — computing the percentage in the keypad and
+committing it there — is analysed in the alternatives table and rejected, precisely because it would
+move both arithmetic and formatting into the layer whose contract must stay unchanged.
+
 ## Решение
 
 1. **Reuse, do not reimplement.** The `percent` command (`ADR-002`) computes `p = a × b ÷ 100` by
@@ -42,6 +51,11 @@ from the `+`, `-`, `×`, `÷` behaviour that `AC-1` and `AC-2` compare against.
    of `a × b ÷ 100` beyond the display do not survive into `=` (DEC-2, `AC-3`).
 4. **No new display states.** `%` cannot introduce a notation that does not already appear for the
    same value produced by an existing operation, and it cannot widen or narrow the display.
+5. **No keypad-facing contract change.** The parity mechanism adds nothing the keypad can see: no
+   formatting mode, no precision field, no callback and no render variant is requested from the
+   keypad, and the value the display shows is produced by the same pipeline in the same way as for
+   `+`, `-`, `×`, `÷`. The one new step on the value path — the round-trip of point 3 — happens
+   between the core and the formatter, before any display binding.
 
 Equivalently: for any `a`, `b`, `op`, `%` produces the value of the existing-key route `a × b ÷ 100 =`
 and displays it with the existing formatter; the commitment boundary is the displayed string.
@@ -60,12 +74,16 @@ and displays it with the existing formatter; the commitment boundary is the disp
 - Reusing the existing evaluation order preserves the left-to-right semantics assumed by the
   reference route in `REQ-003` ("`p = a × b ÷ 100` is exactly the sequence `a × b ÷ 100 =` evaluated
   left to right"), so the reference route is literally the same code path.
+- Keeping the whole mechanism behind the display binding is also what makes the keypad answer cheap:
+  the layout only has to name a command (`ADR-004`), and there is no precision or notation knob that
+  a keypad descriptor or entry point would have to carry.
 
 ## Альтернативы
 
 | Вариант | Плюсы | Минусы | Почему не выбран |
 | --- | --- | --- | --- |
 | Keep full internal precision of `p`, format only for display | Apparently "more accurate"; avoids an explicit round-trip step | The value handed to `=` differs from the value shown; `SCN-006` step 4 shows `R1 ≠ R2`; contradicts the operator's answer DEC-2 | Fails `REQ-003` AC-3 by construction; DEC-2 commits the displayed value |
+| Compute the percentage and commit the rounded value in the keypad/input layer, leaving the core's value path untouched | No change to the core's operand/display contract; the formatting parity is decided in one place next to the key that triggers it | The keypad would need its own multiply/divide and its own format-then-parse step — a second arithmetic and formatting path that drifts; and it cannot see `a`, so it cannot compute `a × b ÷ 100` at all | Fails `REQ-003` AC-1/AC-2 (single arithmetic path and single formatter) and fails `REQ-002` AC-1…AC-6 structurally; it also changes the keypad contract the rework order asks to leave alone |
 | Percent-specific rounding, e.g. round all percent results to two decimals | Predictable percentages; easy to explain | Introduces a new rounding rule, which is out of scope; breaks character-identity with the existing-operation route | Fails `AC-1`/`AC-2` parity; scope violation ("new rounding rules" is out of scope) |
 | Format percent results by string manipulation (trim/append characters) | Trivial to implement; no formatter work | A second formatting implementation that will drift from the formatter in width, notation and rounding | Breaks the single-formatter guarantee `AC-2` relies on |
 | A second formatter instance configured for percent | Isolation; no risk to existing formatting | Two sources of truth for width/precision; drift is invisible until a regression | Unnecessary duplication; `REQ-003` asks for identity with the existing formatter |
@@ -75,9 +93,10 @@ and displays it with the existing formatter; the commitment boundary is the disp
 
 - The core needs an explicit format-then-parse step when a `%` result becomes the operand of a
   pending operation; this is a small, well-defined boundary and the only new operation on the value
-  path.
-- No data schema or persisted state is touched; the impact is on the internal operand/display
-  contract (`public_api` of the core).
+  path. It is invisible to the keypad: no descriptor, binding or keypad entry point is involved.
+- No data schema or persisted state is touched; the impact is on the core's internal operand/display
+  contract (`public_api` of the core), while the keypad's contract keeps its impact `ui`-only status
+  as recorded in `ADR-004`.
 - Verification: `SCN-006` (including the large-operand step 4) and `SCN-002`; criteria
   `REQ-003` AC-1…AC-3. Regression: `SCN-008` confirms the formatter's behaviour for existing-key
   sequences is unchanged.
