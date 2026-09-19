@@ -23,18 +23,24 @@ for the same value, on values that fit in the display and on a value that does n
 3. Press `C`, `2`, `0`, `0`, `×`, `1`, `0`, `%`; read the display. Press `C`, `2`, `0`, `0`, `÷`,
    `1`, `0`, `=`; read the display. Compare the two strings character by character.
 4. Press `C`, then `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `×`, `1`, `2`, `3`, `4`, `5`, `6`,
-   `7`, `8`, `9`, `%`; read the display after `%` as `X`. Press `=`. Read the display as `D1`.
-   Then press `C`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `×`, then the digits of `X`, `=`;
-   read the display as `D2`. Compare `D1` and `D2` character by character.
+   `7`, `8`, `9`, `%`; read the display after `%` as `X`. Press `=`. Read the display as `R1`.
+   Then press `C`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `×`, then the keys that enter `X`
+   exactly as displayed, `=`, and read the display as `R2`. Compare `R1` and `R2` character by
+   character.
 5. Check the display width of the step 4 result equals the display width the calculator uses for
    other results of the same magnitude (compare with `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`,
    `9`, `×`, `1`, `0`, `0`, `0`, `0`, `0`, `0`, `0`, `0`, `=`).
 
+Contingency for step 4: the comparison requires that the digits of `X` can be re-entered on the
+keypad. If the build renders `X` in a form the keypad cannot re-enter (for example exponent
+notation), repeat step 4 with the largest operand pair whose `%` display is a plain digit string;
+`R1` and `R2` must still be character-identical.
+
 ## Observable outcome
 
 - Steps 1–3: the `%` route and the existing-key route produce identical character strings.
-- Step 4: `D1` and `D2` are identical character strings — the operand used by `=` is exactly the
-  displayed value of `X`, with no hidden digits.
+- Step 4: `R1` and `R2` are identical character strings — the operand used by `=` is the value
+  displayed as `X`, and not the unrounded percentage `a × b ÷ 100`.
 
 ## Traces
 

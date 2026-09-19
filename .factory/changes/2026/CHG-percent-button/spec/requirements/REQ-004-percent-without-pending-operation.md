@@ -28,11 +28,13 @@ operand has not been entered, `%` is a no-op: the display and the pending operat
   `0`, and pressing `%` leaves the display reading `0` with no error indicator and no blank display.
   Check: reset, press `%`, compare the display characters with the pre-change build's reset display.
 
-## Depends on
+## Decision
 
-- Open question Q3 (`intent.md`): AC-1, AC-2 and AC-4 encode the assumed defaults (no pending
-  operation → divide the entry by 100; pending operation without a second operand → no-op). If the
-  operator chooses otherwise, these criteria are rewritten in place, keeping their ids.
+AC-1, AC-2 and AC-4 encode decision **DEC-3** (`intent.md`): the operator's answer A to
+`q_959333f8266c7fa5` — with no pending operation, divide the entry by 100; with a pending operation
+whose second operand has not been entered, do nothing. AC-3 records the point made in that answer,
+that a result displayed after `=` is the same case as a plain entry. No open question remains for
+this requirement.
 
 ## Traceability
 

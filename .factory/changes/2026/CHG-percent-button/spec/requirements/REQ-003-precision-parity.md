@@ -31,19 +31,28 @@ Reference implementation of the rule in existing keys: `p = a × b ÷ 100` is ex
   same characters as `200 ÷ 10 =`; no additional decimal places, thousands separators or exponent
   notation appear at `%` that do not appear for the same value produced by `+`, `-`, `×`, `÷`.
 - **AC-3** The operand handed to the pending operation is exactly the value displayed after `%`, with
-  no digits held beyond the display: `a op b % =` and `a op <the digits displayed after %> =` display
-  the same characters, including for results whose exact value exceeds the display width.
-  Check: with `a = 123456789` and `b = 123456789` and `op = ×`, run `123456789 × 123456789 % =`; then
-  run `123456789 × X =`, where `X` is the digit string displayed after `%`; the two displays must be
-  character-identical. This criterion is the direct encoding of open question Q2 and it fails on an
-  implementation that carries hidden internal precision into `=`.
+  no digits held beyond the display: `a op b % =` and `a op <the value displayed after `%`,
+  re-entered as shown> =` display the same characters, including for percentages whose exact value
+  exceeds the display width.
+  Check: press `C`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `×`, `1`, `2`, `3`, `4`, `5`, `6`,
+  `7`, `8`, `9`, `%` and read the display as `X` — the exact percentage
+  `123456789 × 123456789 ÷ 100 = 152415787501905.21` has more significant digits than a plain-digit
+  display shows, so the tail digit of `X` is where an implementation that commits the unrounded
+  product diverges. Press `=` and read `R1`. Then press `C`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`,
+  `9`, `×`, the keys that enter `X` exactly as displayed, `=`, and read `R2`. Assert `R1` and `R2` are
+  character-identical. If the build renders `X` in a form the keypad cannot re-enter (for example
+  exponent notation), repeat the check with the largest operand pair whose `%` display is a plain
+  digit string; `R1` and `R2` must still be character-identical.
+  This criterion is the direct encoding of decision DEC-2 and it fails on an implementation that
+  carries hidden internal precision into `=`.
 
-## Depends on
+## Decision
 
-- Open question Q2 (`intent.md`): AC-3 encodes "committed operand = displayed value". If the operator
-  chooses full internal precision, AC-3 must be rewritten in place (id `AC-3` is kept) to require
-  that `123456789 × 123456789 % =` differ from `123456789 × X =` whenever the exact product
-  `a × b ÷ 100` is not exactly representable in the display.
+AC-3 encodes decision **DEC-2** (`intent.md`): the operator's answer A to `q_c88d93fd2bb49df4` — the
+displayed (rounded) value is committed. If a later round chooses full internal precision instead,
+AC-3 is rewritten in place — the id `AC-3` is kept — so that it instead requires `R1` and `R2` to
+differ whenever `a × b ÷ 100` is not exactly representable on the display. No open question remains
+for this requirement.
 
 ## Traceability
 

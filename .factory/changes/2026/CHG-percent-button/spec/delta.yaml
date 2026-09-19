@@ -104,26 +104,4 @@ traceability:
   - criterion: req:example-product:calculator:percent-without-pending-operation#AC-4
     scenarios: [scenario:example-product:calculator:percent-without-pending-operation]
 
-open_questions:
-  - id: Q1
-    text: >-
-      Which percent semantics apply while a binary operation is pending — percentage of the pending
-      operand (200 + 10 % = 220) or a plain divide-by-100 of the current entry (200 + 10 % = 200.1)?
-    kind: choice
-    blocking: true
-    anchor: spec/requirements/REQ-002-percent-pending-operation.md#AC-1
-  - id: Q2
-    text: >-
-      Is the operand handed to the pending operation the value as displayed after `%`
-      (display-rounded), or the exact product a × b ÷ 100 at full internal precision when it exceeds
-      the display width?
-    kind: choice
-    blocking: true
-    anchor: spec/requirements/REQ-003-precision-parity.md#AC-3
-  - id: Q3
-    text: >-
-      What must `%` do when there is no pending operand — no pending operation at all (50 %), and a
-      pending operation whose second operand has not been entered (200 + %)?
-    kind: choice
-    blocking: true
-    anchor: spec/requirements/REQ-004-percent-without-pending-operation.md#AC-1
+open_questions: []

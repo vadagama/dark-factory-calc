@@ -30,11 +30,18 @@ computes `a op p`. Each press of `%` applies this rule once to the operand curre
 - **AC-6** Degenerate operands follow the same rule and raise no error state: `200 + 0 %` displays
   `0` and a following `=` displays `200`; `0 + 10 %` displays `0` and a following `=` displays `0`.
 
-## Depends on
+## Decision
 
-- Open question Q1 (`intent.md`), which fixes the semantics encoded in AC-1 … AC-6: percentage of the
-  pending operand rather than a plain divide-by-100 of the current entry. AC-5 distinguishes the two
-  readings independently of Q1.
+AC-1 … AC-6 are fixed by decision **DEC-1** (`intent.md`): the operator's answer A to
+`q_c105c77c6efdb5e2` — percentage of the pending operand, operation retained. Two competing readings
+are excluded by the criteria themselves:
+
+- a plain divide-by-100 of the current entry: that reading displays `0.1` after `%` and `200.1` after
+  `=` for the AC-1 sequence, so AC-1 fails it;
+- a reading in which `%` commits the pending operation: that reading displays `0.2` after the second
+  `%` for the AC-5 sequence, so AC-5 fails it.
+
+No open question remains for this requirement.
 
 ## Traceability
 
