@@ -1,0 +1,279 @@
+schema: dark-factory.dev/change-delta/v1
+change:
+  id: chg:example-product:2026:percent-button
+  slug: percent-button
+  path: .factory/changes/2026/CHG-percent-button
+  title: Percent button for the calculator
+  product: example-product
+  status: draft
+  stage: specification
+  phase: requirements
+  attempt: 2
+
+problem:
+  statement: >-
+    The calculator has no percent operation; users compute percentages by hand
+    and type the hand-computed value back in as a plain operand.
+
+goal:
+  statement: >-
+    A % key that applies a percentage to the current operand with the same
+    precision as the other operations.
+
+scope:
+  in:
+    - Percent key present and active on the existing keypad (REQ-001)
+    - Percent semantics for +, -, x, / and for a bare entry (REQ-002)
+    - Precision and display parity with the other operations (REQ-003)
+    - Zero, negative, empty-operand, post-equals and error parity (REQ-004)
+    - Constraint and regression verification (REQ-005)
+  out:
+    - Scientific mode (functions, scientific keypad, mode switch, memory keys)
+    - Change to the layout, labels or ordering of pre-existing keys
+    - New runtime dependencies, new assets, new network access
+    - New number-formatting or rounding rules
+
+constraints:
+  - id: C-1
+    statement: Keep the existing keyboard layout.
+    enforced_by: [REQ-001#AC-2, REQ-001#AC-3, REQ-005#AC-1]
+  - id: C-2
+    statement: No new runtime dependencies.
+    enforced_by: [REQ-005#AC-2, REQ-005#AC-3]
+
+baseline:
+  description: >-
+    Pre-change build of the calculator, captured before implementation.
+  captures:
+    - id: B-1
+      name: keypad label sequence
+      content: ordered list of key labels L0/O0 as rendered in the default state
+      used_by: [REQ-001#AC-1, REQ-001#AC-2, REQ-001#AC-3, REQ-005#AC-1]
+    - id: B-2
+      name: physical keyboard bindings
+      content: map of physical key -> keypad key for the pre-change operators
+      used_by: [REQ-001#AC-5]
+    - id: B-3
+      name: golden non-percent transcripts
+      content: >-
+        per-keystroke display strings for: "2 + 2 =", "1 / 3 =", "5 x -3 =",
+        "1 + 2 + 3 =", "10 / 4 =", "0.1 + 0.2 =", "7 - 9 =", "C", repeated "="
+      used_by: [REQ-005#AC-4]
+    - id: B-4
+      name: dependency graph
+      content: dependency manifest + lockfile entries + modules imported by the shipped bundle
+      used_by: [REQ-005#AC-2]
+
+requirements:
+  - id: req:example-product:percent-button:percent-key
+    file: spec/requirements/REQ-001-percent-key.md
+    title: Percent key is available in the existing keypad
+    criteria: [AC-1, AC-2, AC-3, AC-4, AC-5]
+  - id: req:example-product:percent-button:percent-semantics
+    file: spec/requirements/REQ-002-percent-semantics.md
+    title: Percent semantics applied to the current operand
+    criteria: [AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7]
+  - id: req:example-product:percent-button:precision-and-display
+    file: spec/requirements/REQ-003-precision-and-display.md
+    title: Percent results keep the precision and formatting of other operations
+    criteria: [AC-1, AC-2, AC-3, AC-4]
+  - id: req:example-product:percent-button:edge-cases-and-errors
+    file: spec/requirements/REQ-004-edge-cases-and-errors.md
+    title: Percent edge cases and error parity
+    criteria: [AC-1, AC-2, AC-3, AC-4, AC-5, AC-6]
+  - id: req:example-product:percent-button:constraints-and-regression
+    file: spec/requirements/REQ-005-constraints-and-regression.md
+    title: Constraints hold and existing operations are unregressed
+    criteria: [AC-1, AC-2, AC-3, AC-4]
+
+scenarios:
+  - id: scenario:example-product:percent-button:add-percent-of-operand
+    title: Percent on a pending addition
+    given: display shows 200, "+" pressed, then 10 entered
+    when: "%" is pressed, then "="
+    then: display shows 20 after "%", and 220 after "="
+    covers: [REQ-002#AC-1, REQ-002#AC-6]
+  - id: scenario:example-product:percent-button:subtract-percent-of-operand
+    title: Percent on a pending subtraction
+    given: display shows 200, "-" pressed, then 10 entered
+    when: "%" is pressed, then "="
+    then: display shows 20 after "%", and 180 after "="
+    covers: [REQ-002#AC-2, REQ-002#AC-6]
+  - id: scenario:example-product:percent-button:multiply-by-percent
+    title: Percent on a pending multiplication
+    given: display shows 200, "x" pressed, then 10 entered
+    when: "%" is pressed, then "="
+    then: display shows 0.1 after "%", and 20 after "="
+    covers: [REQ-002#AC-3, REQ-002#AC-6]
+  - id: scenario:example-product:percent-button:divide-by-percent
+    title: Percent on a pending division
+    given: display shows 200, "/" pressed, then 10 entered
+    when: "%" is pressed, then "="
+    then: display shows 0.1 after "%", and 2000 after "="
+    covers: [REQ-002#AC-4, REQ-002#AC-6]
+  - id: scenario:example-product:percent-button:bare-percent
+    title: Percent with no pending operation
+    given: calculator is in the default state
+    when: "5", "0", "%" are pressed (and, in a second run, "5", "0", "=", "%")
+    then: display shows 0.5 in both runs and no pending operation appears
+    covers:
+      - REQ-001#AC-4
+      - REQ-002#AC-5
+      - REQ-004#AC-4
+  - id: scenario:example-product:percent-button:repeated-percent
+    title: Percent applied twice
+    given: display shows 200, "+" pressed, then 10 entered
+    when: "%" is pressed twice, then "="
+    then: display shows 20 after the first "%", 40 after the second "%", 240 after "="
+    covers: [REQ-002#AC-7]
+  - id: scenario:example-product:percent-button:keypad-layout-preserved
+    title: Keypad layout preserved
+    given: the baseline keypad label sequence O0 (B-1)
+    when: the changed build's default keypad is rendered
+    then: exactly one "%" label is present, L0 is a subset of the labels, and removing "%" reproduces O0 exactly
+    covers: [REQ-001#AC-1, REQ-001#AC-2, REQ-001#AC-3]
+  - id: scenario:example-product:percent-button:keyboard-binding-parity
+    title: Physical keyboard parity for percent
+    given: the pre-change physical key bindings (B-2)
+    when: the "%" character of the active layout is pressed with the calculator focused
+    then: the state change equals the state change of activating the "%" key; if B-2 is empty the scenario is satisfied vacuously
+    covers: [REQ-001#AC-5]
+  - id: scenario:example-product:percent-button:precision-parity
+    title: Precision and formatting parity
+    given: calculator in default state
+    when: "100 / 3 % =", "200 x 10 %", "200 x 10 % =", "2 / 3 =" (before and after a percent sequence), "200 x 0.5 % =" are executed
+    then: "100 / 3 % =" equals the display of "100 / 0.03 ="; "200 x 10 %" shows 0.1 and "=" shows 20; "2 / 3 =" is byte-identical before/after; "200 x 0.5 % =" shows 1
+    covers: [REQ-003#AC-1, REQ-003#AC-2, REQ-003#AC-3, REQ-003#AC-4]
+  - id: scenario:example-product:percent-button:zero-and-error-parity
+    title: Zero operand and error parity
+    given: calculator in default state
+    when: "200 x 0 % =", "200 + 0 % =", "200 / 0 % =" are executed
+    then: results are 0, 200, and the identical error state/message as "200 / 0 ="; no other error is raised
+    covers: [REQ-004#AC-1, REQ-004#AC-2, REQ-004#AC-6]
+  - id: scenario:example-product:percent-button:no-second-operand
+    title: Percent pressed without a current operand
+    given: display shows 200, "+" pressed, no second operand entered
+    when: "%" is pressed, then "="
+    then: display still shows 200 after "%", the pending "+" is preserved, and "=" shows 200; no error is raised
+    covers: [REQ-004#AC-3, REQ-004#AC-6]
+  - id: scenario:example-product:percent-button:negative-operand
+    title: Percent with a negative current operand
+    given: calculator in default state
+    when: "200 + (-10) % =" and "200 - (-10) % =" are executed
+    then: after "%" the display shows -20 in both runs; after "=" the displays are 180 and 220; no error is raised
+    covers: [REQ-004#AC-5, REQ-004#AC-6]
+  - id: scenario:example-product:percent-button:dependency-and-regression-parity
+    title: No new dependency, no regression
+    given: baseline dependency graph B-4 and golden transcripts B-3
+    when: the changed build's dependency graph is diffed and the B-3 transcripts are replayed on the changed build
+    then: no runtime dependency or bundle module is added, no additional network request is made during the percent scenarios, and every B-3 per-keystroke display string is byte-identical
+    covers: [REQ-005#AC-2, REQ-005#AC-3, REQ-005#AC-4]
+  - id: scenario:example-product:percent-button:no-scientific-mode
+    title: Scientific mode not introduced
+    given: baseline keypad label sequence L0 (B-1)
+    when: the changed build's keypad labels are collected
+    then: the label set equals L0 plus exactly one "%" and contains no scientific function or mode-switch label
+    covers: [REQ-005#AC-1]
+
+traceability:
+  - criterion: REQ-001#AC-1
+    covered_by: [scenario:example-product:percent-button:keypad-layout-preserved]
+  - criterion: REQ-001#AC-2
+    covered_by: [scenario:example-product:percent-button:keypad-layout-preserved]
+  - criterion: REQ-001#AC-3
+    covered_by: [scenario:example-product:percent-button:keypad-layout-preserved]
+  - criterion: REQ-001#AC-4
+    covered_by: [scenario:example-product:percent-button:bare-percent]
+  - criterion: REQ-001#AC-5
+    covered_by: [scenario:example-product:percent-button:keyboard-binding-parity]
+  - criterion: REQ-002#AC-1
+    covered_by: [scenario:example-product:percent-button:add-percent-of-operand]
+  - criterion: REQ-002#AC-2
+    covered_by: [scenario:example-product:percent-button:subtract-percent-of-operand]
+  - criterion: REQ-002#AC-3
+    covered_by: [scenario:example-product:percent-button:multiply-by-percent]
+  - criterion: REQ-002#AC-4
+    covered_by: [scenario:example-product:percent-button:divide-by-percent]
+  - criterion: REQ-002#AC-5
+    covered_by: [scenario:example-product:percent-button:bare-percent]
+  - criterion: REQ-002#AC-6
+    covered_by:
+      - scenario:example-product:percent-button:add-percent-of-operand
+      - scenario:example-product:percent-button:subtract-percent-of-operand
+      - scenario:example-product:percent-button:multiply-by-percent
+      - scenario:example-product:percent-button:divide-by-percent
+  - criterion: REQ-002#AC-7
+    covered_by: [scenario:example-product:percent-button:repeated-percent]
+  - criterion: REQ-003#AC-1
+    covered_by: [scenario:example-product:percent-button:precision-parity]
+  - criterion: REQ-003#AC-2
+    covered_by: [scenario:example-product:percent-button:precision-parity]
+  - criterion: REQ-003#AC-3
+    covered_by: [scenario:example-product:percent-button:precision-parity]
+  - criterion: REQ-003#AC-4
+    covered_by: [scenario:example-product:percent-button:precision-parity]
+  - criterion: REQ-004#AC-1
+    covered_by: [scenario:example-product:percent-button:zero-and-error-parity]
+  - criterion: REQ-004#AC-2
+    covered_by: [scenario:example-product:percent-button:zero-and-error-parity]
+  - criterion: REQ-004#AC-3
+    covered_by: [scenario:example-product:percent-button:no-second-operand]
+  - criterion: REQ-004#AC-4
+    covered_by: [scenario:example-product:percent-button:bare-percent]
+  - criterion: REQ-004#AC-5
+    covered_by: [scenario:example-product:percent-button:negative-operand]
+  - criterion: REQ-004#AC-6
+    covered_by:
+      - scenario:example-product:percent-button:zero-and-error-parity
+      - scenario:example-product:percent-button:no-second-operand
+      - scenario:example-product:percent-button:negative-operand
+  - criterion: REQ-005#AC-1
+    covered_by: [scenario:example-product:percent-button:no-scientific-mode]
+  - criterion: REQ-005#AC-2
+    covered_by: [scenario:example-product:percent-button:dependency-and-regression-parity]
+  - criterion: REQ-005#AC-3
+    covered_by: [scenario:example-product:percent-button:dependency-and-regression-parity]
+  - criterion: REQ-005#AC-4
+    covered_by: [scenario:example-product:percent-button:dependency-and-regression-parity]
+
+assumptions:
+  - id: A-1
+    statement: >-
+      The calculator behaves as an immediate-execution calculator: a pending
+      binary operator plus a current operand exist, and "=" completes the
+      pending operation.
+    status: observed in the product problem statement ("current operand"); to be confirmed by Q1
+  - id: A-2
+    statement: >-
+      The calculator already formats numbers according to its own rules, and
+      "the same precision as the other operations" means those rules apply
+      unchanged to percent results (verified differentially in REQ-003, so no
+      absolute precision value is assumed).
+    status: accepted
+  - id: A-3
+    statement: >-
+      The existing layout has room for one additional key, so "%" can be added
+      without removing or reordering a pre-existing key. If it does not, the
+      layout question Q2 must be answered before implementation.
+    status: open (Q2, non-blocking for the criteria as written)
+
+open_questions:
+  - id: Q1
+    anchor: spec/requirements/REQ-002-percent-semantics.md#AC-1
+    blocking: true
+    text: >-
+      Confirm the percent convention for + and -: percent-of-first-operand
+      (200 + 10 % = 220) as specified, or literal b/100 (200 + 10 % = 200.1)?
+  - id: Q2
+    anchor: spec/requirements/REQ-001-percent-key.md#AC-2
+    blocking: false
+    text: >-
+      Where does the "%" key go, given that no existing key may be removed,
+      renamed or reordered: new key in the existing operator row, additional
+      row/column slot, or an existing free slot?
+  - id: Q3
+    anchor: spec/requirements/REQ-004-edge-cases-and-errors.md#AC-3
+    blocking: false
+    text: >-
+      Confirm that "%" pressed with a pending operator and no current operand
+      treats the current operand as 0 (display unchanged, "=" shows 200).
